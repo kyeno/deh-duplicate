@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deh-duplicate"
+version = "0.1.0"
+description = "Image duplicate-detection toolkit — a reusable library plus a CLI binary."
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "pillow>=9.0.0",
+    "numpy>=1.20.0",
+    "python-dotenv>=1.0.0",
+    "imagehash>=4.3.0",
+    "scipy>=1.7.0",
+    "tqdm>=4.66.0",
+    "PyQt6>=6.0.0",
+    "opencv-python>=4.8.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+# Real, installable commands (the Python equivalent of the "bin" field in package.json).
+# After `pip install -e .` these become available on your PATH:
+[project.scripts]
+deh-duplicate     = "deh.cli.duplicate:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+# Target the oldest Python the project supports (requires-python >=3.10), so a
+# 3.10 interpreter never sees syntax the linter assumed away.
+target-version = "py310"
+src = ["src", "tests"]
+# .venv is third-party, not project code.
+extend-exclude = [".venv"]
+line-length = 100
+
+[tool.ruff.lint]
+# Rules chosen for what they *find*, not for how much they reformat:
+#   F     - pyflakes: unused imports/variables, undefined names, redefinitions
+#   E4    - imports not at the top of the module
+#   E7    - statement-level smells (semicolon stacks, ambiguous names)
+#   E9    - syntax errors and other things that mean "this file is broken"
+#   W     - trailing whitespace / missing final newline
+#   B     - bugbear: real footguns (mutable defaults, B008, raise-from, zip strict)
+# Deliberately excluded: E501 (line length - the codebase is not formatted to a
+# fixed width and reflowing it is a diff for its own sake) and the whole E7xx
+# style family beyond E4/E7 above (E701/E702 are left as warnings, not fixed:
+# see per-file-ignores).
+select = ["F", "E4", "E7", "E9", "W", "B"]
+ignore = [
+    # The CLI modules print a banner before parsing; the import order is the
+    # bootstrap contract documented in deh/__init__.py.
+    "E402",
+    # B008: FunctionCall in argument default is the idiom this codebase uses
+    # for injectable defaults (default_machine(), make_machine()). It is
+    # evaluated per call on purpose.
+    "B008",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Facades re-export by design; __all__ lists them where a linter needs proof.
+"src/deh/__init__.py" = ["F401"]
+"src/deh/gui/__init__.py" = ["F401"]
+# Trailing whitespace INSIDE docstrings (the module banner in cli/duplicate.py,
+# a wrapped sentence in comparator.py). Ruff will not strip it - it is string
+# content - and re-wrapping prose for a linter is not worth the diff.
+"src/deh/cli/duplicate.py" = ["W291", "W293"]
+"src/deh/duplicate/comparator.py" = ["W291"]
+# E741: single-letter names l, i, O. In tests and in the geometry/scan code
+# these are the conventional names (l for a line, i for an index, O for an
+# observation); renaming them makes the code worse, not better.
+"src/**" = ["E741"]
+# Tests state a fixture compactly on one line ("p = tmp_path / 'a.png'; p.save(...)").
+# The compact form keeps a test's setup on one screen, which is worth more than
+# the style rule. B905: test zips pair literals the test itself constructs.
+"tests/**" = ["E741", "E702", "B905"]
+
+[tool.ruff.format]
+# Formatting is not enforced: the project has no formatter baseline, and a
+# repo-wide reformat belongs in its own commit, not in a linting commit.
+quote-style = "double"

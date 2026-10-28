@@ -1,0 +1,21 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+
+# Vim
+*.swp
+*.swo
+
+# Virtual environment
+.venv/
+
+# Local configuration / secrets
+.env
+
+# Runtime data (models, cache) — not source
+var/
